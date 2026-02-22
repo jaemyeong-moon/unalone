@@ -1,0 +1,38 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: event-service
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/project_events
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: event-service-group
+      auto-offset-reset: earliest
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+kafka:
+  topics:
+    api-events: api-events
+    admin-events: admin-events
+
+logging:
+  level:
+    com.project: DEBUG

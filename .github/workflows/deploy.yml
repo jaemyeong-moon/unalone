@@ -1,0 +1,40 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        # TODO: Configure your k8s cluster credentials
+        run: echo "Configure kubectl for ${{ github.event.inputs.environment }}"
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/namespace.yml
+          kubectl apply -f k8s/infra/
+          kubectl apply -f k8s/api-service/
+          kubectl apply -f k8s/admin-service/
+          kubectl apply -f k8s/event-service/
+          kubectl apply -f k8s/frontend/
+
+      - name: Verify deployment
+        run: |
+          kubectl -n project rollout status deployment/api-service
+          kubectl -n project rollout status deployment/admin-service
+          kubectl -n project rollout status deployment/event-service
+          kubectl -n project rollout status deployment/frontend

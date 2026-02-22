@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'api-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['api-service:8080']
+    scrape_interval: 10s
+
+  - job_name: 'admin-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['admin-service:8081']
+    scrape_interval: 10s
+
+  - job_name: 'event-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['event-service:8082']
+    scrape_interval: 10s
