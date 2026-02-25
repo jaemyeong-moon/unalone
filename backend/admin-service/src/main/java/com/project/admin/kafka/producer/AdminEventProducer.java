@@ -10,13 +10,10 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class AdminEventProducer {
-
-    private static final String ADMIN_EVENTS_TOPIC = "admin-events";
-
     private final EventPublisher eventPublisher;
 
-    public void publishAdminEvent(DomainEvent event) {
-        log.info("Publishing admin event: {}", event);
-        eventPublisher.publish(ADMIN_EVENTS_TOPIC, event);
+    public void publishEvent(String topic, DomainEvent event) {
+        log.info("Publishing event [{}] to topic [{}]", event.getEventType(), topic);
+        eventPublisher.publish(topic, event);
     }
 }
