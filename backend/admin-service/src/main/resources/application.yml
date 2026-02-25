@@ -17,6 +17,9 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/project_db
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
@@ -37,6 +40,11 @@ management:
   endpoint:
     health:
       show-details: always
+
+kafka:
+  topics:
+    checkin-events: checkin-events
+    alert-events: alert-events
 
 logging:
   level:

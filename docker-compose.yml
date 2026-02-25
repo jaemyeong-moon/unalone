@@ -104,8 +104,8 @@ services:
 
   api-service:
     build:
-      context: ./backend/api-service
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: api-service/Dockerfile
     container_name: api-service
     ports:
       - "8080:8080"
@@ -115,6 +115,7 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JWT_SECRET: ThisIsASecretKeyForJwtTokenGenerationMin32Bytes!
     depends_on:
       kafka:
         condition: service_healthy
@@ -126,8 +127,8 @@ services:
 
   admin-service:
     build:
-      context: ./backend/admin-service
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: admin-service/Dockerfile
     container_name: admin-service
     ports:
       - "8081:8081"
@@ -136,11 +137,14 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/project_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:mongo@mongodb:27017/project_db?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     depends_on:
       kafka:
         condition: service_healthy
       postgresql:
+        condition: service_healthy
+      mongodb:
         condition: service_healthy
     networks:
       - app-network
@@ -148,8 +152,8 @@ services:
 
   event-service:
     build:
-      context: ./backend/event-service
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: event-service/Dockerfile
     container_name: event-service
     ports:
       - "8082:8082"
@@ -172,14 +176,18 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://api-service:8080
+        NEXT_PUBLIC_ADMIN_API_URL: http://admin-service:8081
     container_name: frontend
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8080
-      NEXT_PUBLIC_ADMIN_API_URL: http://localhost:8081
+      NEXT_PUBLIC_API_URL: http://api-service:8080
+      NEXT_PUBLIC_ADMIN_API_URL: http://admin-service:8081
     depends_on:
       - api-service
+      - admin-service
     networks:
       - app-network
     restart: on-failure
@@ -213,6 +221,7 @@ services:
       GF_USERS_ALLOW_SIGN_UP: "false"
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prometheus
     networks:

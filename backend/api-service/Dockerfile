@@ -2,16 +2,15 @@
 FROM gradle:8-jdk17 AS build
 WORKDIR /app
 
-COPY backend/ backend/
+COPY . .
 
-WORKDIR /app/backend
 RUN gradle :api-service:bootJar -x test --no-daemon
 
 # Stage 2: Runtime
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-COPY --from=build /app/backend/api-service/build/libs/*.jar app.jar
+COPY --from=build /app/api-service/build/libs/*.jar app.jar
 
 EXPOSE 8080
 

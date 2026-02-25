@@ -6,7 +6,7 @@ spring:
     name: event-service
   data:
     mongodb:
-      uri: mongodb://localhost:27017/project_events
+      uri: mongodb://localhost:27017/project_db
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
@@ -30,8 +30,8 @@ management:
 
 kafka:
   topics:
-    api-events: api-events
-    admin-events: admin-events
+    checkin-events: checkin-events
+    alert-events: alert-events
 
 logging:
   level:
