@@ -5,8 +5,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Project Dashboard',
-  description: 'Service monitoring and management dashboard',
+  title: 'Unalone - 안심 안부 서비스',
+  description: '혼자 사는 분들의 안전을 지키는 안부 체크 커뮤니티 서비스',
 };
 
 export default function RootLayout({
