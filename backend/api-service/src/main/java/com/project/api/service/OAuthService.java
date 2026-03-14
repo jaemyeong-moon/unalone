@@ -5,7 +5,9 @@ import com.project.api.domain.Profile;
 import com.project.api.domain.User;
 import com.project.api.domain.UserOAuthConnection;
 import com.project.api.dto.auth.LoginResponse;
+import com.project.api.dto.auth.OAuthConnectionResponse;
 import com.project.api.dto.auth.OAuthLinkResponse;
+import com.project.api.dto.auth.OAuthLoginRequest;
 import com.project.api.dto.auth.OAuthUserInfo;
 import com.project.api.exception.BusinessException;
 import com.project.api.repository.ProfileRepository;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OAuthService {
 
     private final OAuthProviderConfig oAuthProviderConfig;
+    private final OAuthProviderFactory oAuthProviderFactory;
     private final KakaoOAuthClient kakaoOAuthClient;
     private final GoogleOAuthClient googleOAuthClient;
     private final UserRepository userRepository;
@@ -135,6 +139,65 @@ public class OAuthService {
     }
 
     /**
+     * OAuth 직접 로그인 - 프론트엔드에서 Authorization Code를 직접 전달하는 방식
+     * POST /api/auth/oauth/login
+     */
+    @Transactional
+    public LoginResult login(OAuthLoginRequest request) {
+        String provider = request.provider().toLowerCase();
+        validateProvider(provider);
+
+        // 1. Authorization Code -> Access Token
+        OAuthProviderClient client = oAuthProviderFactory.getClient(provider);
+        String accessToken = client.exchangeToken(request.authorizationCode());
+
+        // 2. Access Token -> 사용자 정보
+        OAuthUserInfo userInfo = client.getUserInfo(accessToken);
+
+        // 3. OAuth 연동 조회
+        Optional<UserOAuthConnection> existingConnection =
+                oauthConnectionRepository.findByOauthProviderAndOauthId(provider, userInfo.oauthId());
+
+        if (existingConnection.isPresent()) {
+            // 기존 연동 사용자 - 재로그인
+            User user = existingConnection.get().getUser();
+            LoginResponse loginResponse = buildLoginResponse(user);
+            return new LoginResult(loginResponse, false);
+        }
+
+        // 4. 이메일로 기존 계정 조회
+        if (userInfo.email() != null) {
+            Optional<User> existingUser = userRepository.findByEmail(userInfo.email());
+            if (existingUser.isPresent()) {
+                // BR-002: 이메일 중복 시 자동 연동 금지
+                throw BusinessException.conflict(
+                        "이미 해당 이메일로 가입된 계정이 있습니다. 기존 계정에 로그인 후 소셜 계정을 연동해주세요.");
+            }
+        }
+
+        // 5. 신규 사용자 - 자동 회원가입
+        User newUser = createOAuthUser(userInfo);
+        createOAuthConnection(newUser, provider, userInfo);
+        createDefaultProfile(newUser);
+
+        LoginResponse loginResponse = buildLoginResponse(newUser);
+        return new LoginResult(loginResponse, true);
+    }
+
+    /**
+     * 현재 사용자의 연동된 OAuth 제공자 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public List<OAuthConnectionResponse> getConnectedProviders(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다"));
+
+        return oauthConnectionRepository.findByUser(user).stream()
+                .map(OAuthConnectionResponse::from)
+                .toList();
+    }
+
+    /**
      * 소셜 계정 연동 해제
      */
     @Transactional
@@ -213,6 +276,8 @@ public class OAuthService {
                 .oauthProvider(provider.toLowerCase())
                 .oauthId(userInfo.oauthId())
                 .oauthEmail(userInfo.email())
+                .oauthNickname(userInfo.name())
+                .profileImageUrl(userInfo.profileImageUrl())
                 .build();
 
         return oauthConnectionRepository.save(connection);
@@ -249,6 +314,15 @@ public class OAuthService {
         public boolean isEmailConflict() {
             return existingEmail != null;
         }
+    }
+
+    /**
+     * 직접 로그인 결과를 담는 record
+     */
+    public record LoginResult(
+            LoginResponse loginResponse,
+            boolean isNewUser
+    ) {
     }
 
     private record StateInfo(String provider, String frontendRedirectUri) {

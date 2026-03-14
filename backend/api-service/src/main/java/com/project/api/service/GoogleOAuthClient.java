@@ -15,7 +15,7 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class GoogleOAuthClient {
+public class GoogleOAuthClient implements OAuthProviderClient {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
 
@@ -25,6 +25,7 @@ public class GoogleOAuthClient {
     /**
      * 구글 인증 URL 생성
      */
+    @Override
     public String buildAuthorizationUrl(String state) {
         OAuthProviderConfig.ProviderProperties props = oAuthProviderConfig.getGoogle();
         return props.getAuthorizationUri()
@@ -39,6 +40,7 @@ public class GoogleOAuthClient {
     /**
      * Authorization Code -> Access Token 교환
      */
+    @Override
     public String exchangeToken(String code) {
         OAuthProviderConfig.ProviderProperties props = oAuthProviderConfig.getGoogle();
 
@@ -72,6 +74,7 @@ public class GoogleOAuthClient {
     /**
      * Access Token으로 사용자 정보 조회
      */
+    @Override
     public OAuthUserInfo getUserInfo(String accessToken) {
         OAuthProviderConfig.ProviderProperties props = oAuthProviderConfig.getGoogle();
 
@@ -100,5 +103,10 @@ public class GoogleOAuthClient {
             log.error("구글 사용자 정보 조회 중 오류 발생", e);
             throw BusinessException.badRequest("소셜 로그인 서비스에 일시적인 문제가 있습니다. 잠시 후 다시 시도해주세요.");
         }
+    }
+
+    @Override
+    public String getProviderName() {
+        return "google";
     }
 }

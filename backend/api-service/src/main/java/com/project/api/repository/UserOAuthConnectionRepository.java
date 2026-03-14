@@ -18,4 +18,6 @@ public interface UserOAuthConnectionRepository extends JpaRepository<UserOAuthCo
     boolean existsByOauthProviderAndOauthId(String oauthProvider, String oauthId);
 
     long countByUser(User user);
+
+    void deleteByUserAndOauthProvider(User user, String oauthProvider);
 }

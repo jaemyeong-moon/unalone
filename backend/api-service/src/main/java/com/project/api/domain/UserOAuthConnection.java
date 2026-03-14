@@ -25,15 +25,24 @@ public class UserOAuthConnection extends BaseEntity {
     @Column(name = "oauth_email")
     private String oauthEmail;
 
+    @Column(name = "oauth_nickname", length = 100)
+    private String oauthNickname;
+
+    @Column(name = "profile_image_url", length = 500)
+    private String profileImageUrl;
+
     @Column(name = "connected_at", nullable = false)
     private LocalDateTime connectedAt;
 
     @Builder
-    public UserOAuthConnection(User user, String oauthProvider, String oauthId, String oauthEmail) {
+    public UserOAuthConnection(User user, String oauthProvider, String oauthId,
+                               String oauthEmail, String oauthNickname, String profileImageUrl) {
         this.user = user;
         this.oauthProvider = oauthProvider;
         this.oauthId = oauthId;
         this.oauthEmail = oauthEmail;
+        this.oauthNickname = oauthNickname;
+        this.profileImageUrl = profileImageUrl;
         this.connectedAt = LocalDateTime.now();
     }
 }
