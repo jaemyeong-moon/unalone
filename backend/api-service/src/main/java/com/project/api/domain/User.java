@@ -12,7 +12,7 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column
     private String password;
 
     @Column(nullable = false, length = 50)
@@ -54,5 +54,9 @@ public class User extends BaseEntity {
     public void updateProfile(String name, String phone) {
         if (name != null) this.name = name;
         if (phone != null) this.phone = phone;
+    }
+
+    public boolean hasPassword() {
+        return this.password != null && !this.password.isBlank();
     }
 }

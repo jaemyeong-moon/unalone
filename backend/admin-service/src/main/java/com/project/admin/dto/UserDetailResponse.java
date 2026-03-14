@@ -1,27 +1,32 @@
 package com.project.admin.dto;
 
 import com.project.admin.domain.User;
-import lombok.*;
+
 import java.time.LocalDateTime;
 
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class UserDetailResponse {
-    private Long id;
-    private String email;
-    private String name;
-    private String phone;
-    private String role;
-    private String status;
-    private LocalDateTime createdAt;
-    private LocalDateTime lastCheckInAt;
-
+/**
+ * 사용자 상세 정보 응답 DTO
+ */
+public record UserDetailResponse(
+        Long id,
+        String email,
+        String name,
+        String phone,
+        String role,
+        String status,
+        LocalDateTime createdAt,
+        LocalDateTime lastCheckInAt
+) {
     public static UserDetailResponse from(User user, LocalDateTime lastCheckInAt) {
-        return UserDetailResponse.builder()
-                .id(user.getId()).email(user.getEmail()).name(user.getName())
-                .phone(user.getPhone()).role(user.getRole().name()).status(user.getStatus().name())
-                .createdAt(user.getCreatedAt()).lastCheckInAt(lastCheckInAt).build();
+        return new UserDetailResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                user.getPhone(),
+                user.getRole().name(),
+                user.getStatus().name(),
+                user.getCreatedAt(),
+                lastCheckInAt
+        );
     }
 }

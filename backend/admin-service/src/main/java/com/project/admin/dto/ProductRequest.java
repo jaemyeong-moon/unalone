@@ -3,26 +3,25 @@ package com.project.admin.dto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-@Getter
-@NoArgsConstructor
-public class ProductRequest {
+/**
+ * 상품 등록/수정 요청 DTO
+ */
+public record ProductRequest(
+        @NotBlank(message = "상품명은 필수입니다")
+        String name,
 
-    @NotBlank(message = "상품명은 필수입니다")
-    private String name;
+        @NotNull(message = "가격은 필수입니다")
+        @Min(value = 0, message = "가격은 0 이상이어야 합니다")
+        BigDecimal price,
 
-    @NotNull(message = "가격은 필수입니다")
-    @Min(value = 0, message = "가격은 0 이상이어야 합니다")
-    private BigDecimal price;
+        @Min(value = 0, message = "재고는 0 이상이어야 합니다")
+        int stock,
 
-    @Min(value = 0, message = "재고는 0 이상이어야 합니다")
-    private int stock;
+        String category,
 
-    private String category;
-
-    private String description;
+        String description
+) {
 }

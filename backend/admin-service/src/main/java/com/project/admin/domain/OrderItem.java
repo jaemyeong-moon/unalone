@@ -1,17 +1,16 @@
 package com.project.admin.domain;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "order_items")
 @Getter
-@Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class OrderItem {
 
     @Id
@@ -30,4 +29,12 @@ public class OrderItem {
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
+
+    @Builder
+    private OrderItem(Order order, Long productId, int quantity, BigDecimal price) {
+        this.order = order;
+        this.productId = productId;
+        this.quantity = quantity;
+        this.price = price;
+    }
 }

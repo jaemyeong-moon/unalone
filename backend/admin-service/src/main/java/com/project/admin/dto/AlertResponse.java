@@ -1,28 +1,32 @@
 package com.project.admin.dto;
 
 import com.project.admin.domain.Alert;
-import lombok.*;
+
 import java.time.LocalDateTime;
 
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class AlertResponse {
-    private String id;
-    private Long userId;
-    private String userName;
-    private String level;
-    private String message;
-    private String status;
-    private LocalDateTime createdAt;
-    private LocalDateTime resolvedAt;
-
+/**
+ * 알림 응답 DTO
+ */
+public record AlertResponse(
+        String id,
+        Long userId,
+        String userName,
+        String level,
+        String message,
+        String status,
+        LocalDateTime createdAt,
+        LocalDateTime resolvedAt
+) {
     public static AlertResponse from(Alert alert, String userName) {
-        return AlertResponse.builder()
-                .id(alert.getId()).userId(alert.getUserId()).userName(userName)
-                .level(alert.getLevel()).message(alert.getMessage())
-                .status(alert.getStatus()).createdAt(alert.getCreatedAt())
-                .resolvedAt(alert.getResolvedAt()).build();
+        return new AlertResponse(
+                alert.getId(),
+                alert.getUserId(),
+                userName,
+                alert.getLevel(),
+                alert.getMessage(),
+                alert.getStatus(),
+                alert.getCreatedAt(),
+                alert.getResolvedAt()
+        );
     }
 }

@@ -3,9 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import apiClient from '@/lib/api';
+import apiClient, { getErrorMessage } from '@/lib/api';
 import { saveAuth } from '@/lib/auth';
 import { ApiResponse, LoginResponse } from '@/types';
+import AlertBanner from '@/components/common/AlertBanner';
+import FormField from '@/components/common/FormField';
+import SocialLoginButton from '@/components/common/SocialLoginButton';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -29,9 +32,8 @@ export default function SignupPage() {
       });
       saveAuth(res.data.data);
       router.push('/');
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      setError(axiosErr.response?.data?.message || '회원가입에 실패했습니다');
+    } catch (err) {
+      setError(getErrorMessage(err, '회원가입에 실패했습니다'));
     } finally {
       setLoading(false);
     }
@@ -51,55 +53,55 @@ export default function SignupPage() {
           <p className="text-sm text-gray-500 mt-1">함께하는 안심 네트워크에 참여하세요</p>
         </div>
 
-        {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
+        {error && <AlertBanner message={error} variant="error" />}
+
+        {/* 소셜 가입 버튼 */}
+        <div className="space-y-3">
+          <SocialLoginButton provider="kakao" label="카카오로 시작하기" />
+          <SocialLoginButton provider="google" label="구글로 시작하기" />
+        </div>
+
+        {/* 구분선 */}
+        <div className="my-6 flex items-center gap-3">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-sm text-gray-400 whitespace-nowrap">또는 이메일로 가입</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">이름</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              placeholder="홍길동"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              placeholder="email@example.com"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              placeholder="8자 이상"
-              required
-              minLength={8}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              전화번호 <span className="text-gray-400">(선택)</span>
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              placeholder="010-1234-5678"
-            />
-          </div>
+          <FormField
+            label="이름"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="홍길동"
+            required
+          />
+          <FormField
+            label="이메일"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="email@example.com"
+            required
+          />
+          <FormField
+            label="비밀번호"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="8자 이상"
+            required
+            minLength={8}
+          />
+          <FormField
+            label="전화번호"
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="010-1234-5678"
+            optional
+          />
           <button
             type="submit"
             disabled={loading}

@@ -45,6 +45,8 @@ kafka:
   topics:
     checkin-events: checkin-events
     alert-events: alert-events
+    care-visit-events: care-visit-events
+    care-match-events: care-match-events
 
 logging:
   level:

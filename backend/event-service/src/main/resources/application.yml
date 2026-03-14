@@ -32,6 +32,12 @@ kafka:
   topics:
     checkin-events: checkin-events
     alert-events: alert-events
+    escalation-events: escalation-events
+    anomaly-events: anomaly-events
+    health-journal-events: health-journal-events
+    health-alert-events: health-alert-events
+    care-visit-events: care-visit-events
+    care-match-events: care-match-events
 
 logging:
   level:

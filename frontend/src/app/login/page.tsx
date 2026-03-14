@@ -1,18 +1,29 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import apiClient from '@/lib/api';
+import apiClient, { getErrorMessage } from '@/lib/api';
 import { saveAuth } from '@/lib/auth';
 import { ApiResponse, LoginResponse } from '@/types';
+import AlertBanner from '@/components/common/AlertBanner';
+import FormField from '@/components/common/FormField';
+import SocialLoginButton from '@/components/common/SocialLoginButton';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam));
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,9 +33,8 @@ export default function LoginPage() {
       const res = await apiClient.post<ApiResponse<LoginResponse>>('/api/auth/login', { email, password });
       saveAuth(res.data.data);
       router.push('/');
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      setError(axiosErr.response?.data?.message || '로그인에 실패했습니다');
+    } catch (err) {
+      setError(getErrorMessage(err, '로그인에 실패했습니다'));
     } finally {
       setLoading(false);
     }
@@ -44,31 +54,25 @@ export default function LoginPage() {
           <p className="text-sm text-gray-500 mt-1">안부를 전하러 오셨군요</p>
         </div>
 
-        {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
+        {error && <AlertBanner message={error} variant="error" />}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              placeholder="email@example.com"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">비밀번호</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              placeholder="8자 이상"
-              required
-            />
-          </div>
+          <FormField
+            label="이메일"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="email@example.com"
+            required
+          />
+          <FormField
+            label="비밀번호"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="8자 이상"
+            required
+          />
           <button
             type="submit"
             disabled={loading}
@@ -78,11 +82,32 @@ export default function LoginPage() {
           </button>
         </form>
 
+        {/* 구분선 */}
+        <div className="my-6 flex items-center gap-3">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-sm text-gray-400 whitespace-nowrap">또는 소셜 계정으로 로그인</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+
+        {/* 소셜 로그인 버튼 */}
+        <div className="space-y-3">
+          <SocialLoginButton provider="kakao" />
+          <SocialLoginButton provider="google" />
+        </div>
+
         <p className="mt-4 text-center text-sm text-gray-600">
           계정이 없으신가요?{' '}
           <Link href="/signup" className="text-emerald-600 hover:underline font-medium">회원가입</Link>
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   );
 }

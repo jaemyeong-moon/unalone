@@ -1,17 +1,15 @@
 package com.project.admin.dto;
 
-import lombok.*;
-
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class DashboardResponse {
-    private long totalUsers;
-    private long activeUsers;
-    private long todayCheckIns;
-    private long activeAlerts;
-    private long warningAlerts;
-    private long dangerAlerts;
-    private long criticalAlerts;
+/**
+ * 대시보드 통계 응답 DTO
+ */
+public record DashboardResponse(
+        long totalUsers,
+        long activeUsers,
+        long todayCheckIns,
+        long activeAlerts,
+        long warningAlerts,
+        long dangerAlerts,
+        long criticalAlerts
+) {
 }

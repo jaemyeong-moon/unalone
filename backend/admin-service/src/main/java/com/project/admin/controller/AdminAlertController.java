@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/admin/alerts")
+@RequestMapping("/api/admin/alerts")
 @RequiredArgsConstructor
 public class AdminAlertController {
     private final AdminAlertService adminAlertService;

@@ -7,26 +7,31 @@ import com.project.admin.repository.CheckInRepository;
 import com.project.admin.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class AdminDashboardService {
+
     private final UserRepository userRepository;
     private final CheckInRepository checkInRepository;
     private final AlertRepository alertRepository;
 
     public DashboardResponse getDashboard() {
         LocalDateTime todayStart = LocalDate.now().atStartOfDay();
-        return DashboardResponse.builder()
-                .totalUsers(userRepository.count())
-                .activeUsers(userRepository.countByStatus(User.UserStatus.ACTIVE))
-                .todayCheckIns(checkInRepository.countByCheckedAtAfter(todayStart))
-                .activeAlerts(alertRepository.countByStatus("ACTIVE"))
-                .warningAlerts(alertRepository.countByLevel("WARNING"))
-                .dangerAlerts(alertRepository.countByLevel("DANGER"))
-                .criticalAlerts(alertRepository.countByLevel("CRITICAL"))
-                .build();
+
+        return new DashboardResponse(
+                userRepository.count(),
+                userRepository.countByStatus(User.UserStatus.ACTIVE),
+                checkInRepository.countByCheckedAtAfter(todayStart),
+                alertRepository.countByStatus("ACTIVE"),
+                alertRepository.countByLevel("WARNING"),
+                alertRepository.countByLevel("DANGER"),
+                alertRepository.countByLevel("CRITICAL")
+        );
     }
 }

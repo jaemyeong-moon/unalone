@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -33,53 +32,39 @@ public class CheckInScheduler {
     public void detectMissedCheckIns() {
         log.info("미응답 체크인 감지 스케줄러 실행");
 
-        List<User> activeUsers = userRepository.findAll().stream()
-                .filter(u -> u.getStatus() == User.UserStatus.ACTIVE)
-                .toList();
-
-        for (User user : activeUsers) {
+        userRepository.findByStatus(User.UserStatus.ACTIVE).forEach(user -> {
             try {
                 checkUserMissedCheckIn(user);
             } catch (Exception e) {
                 log.error("사용자 {} 체크인 감지 중 오류: {}", user.getId(), e.getMessage());
             }
-        }
+        });
     }
 
     private void checkUserMissedCheckIn(User user) {
         Optional<Profile> profileOpt = profileRepository.findByUserId(user.getId());
         if (profileOpt.isEmpty()) return;
 
-        Profile profile = profileOpt.get();
-        int intervalHours = profile.getCheckIntervalHours();
+        int intervalHours = profileOpt.get().getCheckIntervalHours();
+        LocalDateTime expectedAt = checkInRepository.findLatestByUserId(user.getId())
+                .map(CheckIn::getCheckedAt)
+                .orElse(user.getCreatedAt())
+                .plusHours(intervalHours);
 
-        Optional<CheckIn> lastCheckIn = checkInRepository.findLatestByUserId(user.getId());
+        if (LocalDateTime.now().isBefore(expectedAt)) return;
 
-        LocalDateTime expectedAt;
-        boolean missed;
+        long missedCount = checkInRepository.countByUserIdAndCheckedAtAfter(
+                user.getId(),
+                LocalDateTime.now().minusDays(7)
+        );
 
-        if (lastCheckIn.isEmpty()) {
-            expectedAt = user.getCreatedAt().plusHours(intervalHours);
-            missed = LocalDateTime.now().isAfter(expectedAt);
-        } else {
-            expectedAt = lastCheckIn.get().getCheckedAt().plusHours(intervalHours);
-            missed = LocalDateTime.now().isAfter(expectedAt);
-        }
+        log.warn("미응답 감지: userId={}, expectedAt={}, missedCount={}", user.getId(), expectedAt, missedCount);
 
-        if (missed) {
-            long missedCount = checkInRepository.countByUserIdAndCheckedAtAfter(
-                    user.getId(),
-                    LocalDateTime.now().minusDays(7)
-            );
-
-            log.warn("미응답 감지: userId={}, expectedAt={}, missedCount={}", user.getId(), expectedAt, missedCount);
-
-            try {
-                eventProducer.publishEvent("checkin-events",
-                        new CheckInMissedEvent(user.getId(), expectedAt, (int) missedCount));
-            } catch (Exception e) {
-                log.error("미응답 이벤트 발행 실패: {}", e.getMessage());
-            }
+        try {
+            eventProducer.publishEvent("checkin-events",
+                    new CheckInMissedEvent(user.getId(), expectedAt, (int) missedCount));
+        } catch (Exception e) {
+            log.error("미응답 이벤트 발행 실패: {}", e.getMessage());
         }
     }
 }

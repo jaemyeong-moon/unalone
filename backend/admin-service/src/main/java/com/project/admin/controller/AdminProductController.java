@@ -7,7 +7,6 @@ import com.project.common.dto.ApiResponse;
 import com.project.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -15,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/admin/products")
+@RequestMapping("/api/admin/products")
 @RequiredArgsConstructor
 public class AdminProductController {
 
@@ -24,8 +23,7 @@ public class AdminProductController {
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<Product>>> getAllProducts(
             @PageableDefault(size = 20) Pageable pageable) {
-        Page<Product> products = adminProductService.getAllProducts(pageable);
-        return ResponseEntity.ok(ApiResponse.ok(PageResponse.from(products)));
+        return ResponseEntity.ok(ApiResponse.ok(PageResponse.from(adminProductService.getAllProducts(pageable))));
     }
 
     @PostMapping

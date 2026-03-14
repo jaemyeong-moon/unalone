@@ -1,18 +1,21 @@
 package com.project.api.dto.auth;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.project.api.domain.User;
 
-@Getter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class LoginResponse {
-    private String token;
-    private Long userId;
-    private String name;
-    private String email;
-    private String role;
+public record LoginResponse(
+        String token,
+        Long userId,
+        String name,
+        String email,
+        String role
+) {
+    public static LoginResponse of(String token, User user) {
+        return new LoginResponse(
+                token,
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole().name()
+        );
+    }
 }

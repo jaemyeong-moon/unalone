@@ -12,11 +12,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class GuardianService {
+
+    private static final int MAX_GUARDIAN_COUNT = 5;
 
     private final GuardianRepository guardianRepository;
     private final UserRepository userRepository;
@@ -26,15 +27,15 @@ public class GuardianService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다"));
 
-        if (guardianRepository.countByUserId(userId) >= 5) {
-            throw BusinessException.badRequest("보호자는 최대 5명까지 등록할 수 있습니다");
+        if (guardianRepository.countByUserId(userId) >= MAX_GUARDIAN_COUNT) {
+            throw BusinessException.badRequest("보호자는 최대 %d명까지 등록할 수 있습니다".formatted(MAX_GUARDIAN_COUNT));
         }
 
         Guardian guardian = Guardian.builder()
                 .user(user)
-                .name(request.getName())
-                .phone(request.getPhone())
-                .relationship(request.getRelationship())
+                .name(request.name())
+                .phone(request.phone())
+                .relationship(request.relationship())
                 .build();
 
         guardianRepository.save(guardian);
@@ -45,7 +46,7 @@ public class GuardianService {
     public List<GuardianResponse> getGuardians(Long userId) {
         return guardianRepository.findByUserId(userId).stream()
                 .map(GuardianResponse::from)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional

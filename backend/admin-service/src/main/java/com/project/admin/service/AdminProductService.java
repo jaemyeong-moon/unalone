@@ -2,6 +2,7 @@ package com.project.admin.service;
 
 import com.project.admin.domain.Product;
 import com.project.admin.dto.ProductRequest;
+import com.project.admin.exception.ResourceNotFoundException;
 import com.project.admin.kafka.producer.AdminEventProducer;
 import com.project.admin.repository.ProductRepository;
 import com.project.common.event.StockUpdatedEvent;
@@ -9,20 +10,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class AdminProductService {
 
     private final ProductRepository productRepository;
     private final AdminEventProducer adminEventProducer;
 
-    @Transactional(readOnly = true)
     public Page<Product> getAllProducts(Pageable pageable) {
         return productRepository.findAll(pageable);
     }
@@ -30,11 +29,11 @@ public class AdminProductService {
     @Transactional
     public Product createProduct(ProductRequest request) {
         Product product = Product.builder()
-                .name(request.getName())
-                .price(request.getPrice())
-                .stock(request.getStock())
-                .category(request.getCategory())
-                .description(request.getDescription())
+                .name(request.name())
+                .price(request.price())
+                .stock(request.stock())
+                .category(request.category())
+                .description(request.description())
                 .build();
         return productRepository.save(product);
     }
@@ -42,32 +41,26 @@ public class AdminProductService {
     @Transactional
     public Product updateProduct(Long id, ProductRequest request) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("상품을 찾을 수 없습니다: " + id));
 
         int previousStock = product.getStock();
-
-        product.setName(request.getName());
-        product.setPrice(request.getPrice());
-        product.setStock(request.getStock());
-        product.setCategory(request.getCategory());
-        product.setDescription(request.getDescription());
-
-        Product saved = productRepository.save(product);
+        product.update(request.name(), request.price(), request.stock(), request.category(), request.description());
 
         // 재고 변경 시 이벤트 발행
-        if (previousStock != request.getStock()) {
-            StockUpdatedEvent event = new StockUpdatedEvent(
-                    id, previousStock, request.getStock(), "ADMIN_UPDATE");
-            adminEventProducer.publishEvent("product-events", event);
+        if (previousStock != request.stock()) {
+            adminEventProducer.publishEvent(
+                    "product-events",
+                    new StockUpdatedEvent(id, previousStock, request.stock(), "ADMIN_UPDATE")
+            );
         }
 
-        return saved;
+        return product;
     }
 
     @Transactional
     public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다: " + id);
+            throw new ResourceNotFoundException("상품을 찾을 수 없습니다: " + id);
         }
         productRepository.deleteById(id);
     }

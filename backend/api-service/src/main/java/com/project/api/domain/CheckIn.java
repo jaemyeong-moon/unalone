@@ -25,15 +25,19 @@ public class CheckIn extends BaseEntity {
     @Column(nullable = false)
     private LocalDateTime checkedAt;
 
+    @Column(name = "mood_score")
+    private Integer moodScore;
+
     public enum CheckInStatus {
         CHECKED, MISSED
     }
 
     @Builder
-    public CheckIn(User user, CheckInStatus status, String message) {
+    public CheckIn(User user, CheckInStatus status, String message, Integer moodScore) {
         this.user = user;
         this.status = status;
         this.message = message;
+        this.moodScore = moodScore;
         this.checkedAt = LocalDateTime.now();
     }
 }

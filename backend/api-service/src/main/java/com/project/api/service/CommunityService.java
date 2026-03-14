@@ -25,19 +25,11 @@ public class CommunityService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> BusinessException.notFound("사용자를 찾을 수 없습니다"));
 
-        CommunityPost.PostCategory category = CommunityPost.PostCategory.DAILY;
-        if (request.getCategory() != null) {
-            try {
-                category = CommunityPost.PostCategory.valueOf(request.getCategory());
-            } catch (IllegalArgumentException ignored) {
-            }
-        }
-
         CommunityPost post = CommunityPost.builder()
                 .user(user)
-                .title(request.getTitle())
-                .content(request.getContent())
-                .category(category)
+                .title(request.title())
+                .content(request.content())
+                .category(parseCategory(request.category()))
                 .build();
 
         postRepository.save(post);
@@ -46,13 +38,10 @@ public class CommunityService {
 
     @Transactional(readOnly = true)
     public Page<CommunityPostResponse> getPosts(String category, Pageable pageable) {
-        if (category != null && !category.isEmpty()) {
-            try {
-                CommunityPost.PostCategory cat = CommunityPost.PostCategory.valueOf(category);
-                return postRepository.findByCategoryWithUser(cat, pageable)
-                        .map(CommunityPostResponse::from);
-            } catch (IllegalArgumentException ignored) {
-            }
+        if (category != null && !category.isBlank()) {
+            CommunityPost.PostCategory parsed = parseCategory(category);
+            return postRepository.findByCategoryWithUser(parsed, pageable)
+                    .map(CommunityPostResponse::from);
         }
         return postRepository.findAllWithUser(pageable)
                 .map(CommunityPostResponse::from);
@@ -60,9 +49,9 @@ public class CommunityService {
 
     @Transactional(readOnly = true)
     public CommunityPostResponse getPost(Long postId) {
-        CommunityPost post = postRepository.findById(postId)
+        return postRepository.findById(postId)
+                .map(CommunityPostResponse::from)
                 .orElseThrow(() -> BusinessException.notFound("게시글을 찾을 수 없습니다"));
-        return CommunityPostResponse.from(post);
     }
 
     @Transactional
@@ -75,5 +64,17 @@ public class CommunityService {
         }
 
         postRepository.delete(post);
+    }
+
+    // 카테고리 문자열을 enum으로 변환; 잘못된 값은 기본값(DAILY)으로 대체
+    private CommunityPost.PostCategory parseCategory(String category) {
+        if (category == null) {
+            return CommunityPost.PostCategory.DAILY;
+        }
+        try {
+            return CommunityPost.PostCategory.valueOf(category);
+        } catch (IllegalArgumentException e) {
+            return CommunityPost.PostCategory.DAILY;
+        }
     }
 }

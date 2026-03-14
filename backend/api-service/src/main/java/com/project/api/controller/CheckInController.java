@@ -25,9 +25,9 @@ public class CheckInController {
             Authentication authentication,
             @RequestBody(required = false) CheckInRequest request) {
         Long userId = (Long) authentication.getPrincipal();
-        if (request == null) request = new CheckInRequest();
+        CheckInRequest effectiveRequest = request != null ? request : new CheckInRequest();
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(checkInService.checkIn(userId, request), "안부 체크 완료"));
+                .body(ApiResponse.ok(checkInService.checkIn(userId, effectiveRequest), "안부 체크 완료"));
     }
 
     @GetMapping

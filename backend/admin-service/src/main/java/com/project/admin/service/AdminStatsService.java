@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class AdminStatsService {
 
     private final OrderRepository orderRepository;
@@ -23,26 +23,21 @@ public class AdminStatsService {
     private final ProductRepository productRepository;
 
     public SalesStatsResponse getSalesStats() {
-        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
-        LocalDateTime todayEnd = LocalDate.now().atTime(LocalTime.MAX);
-        LocalDateTime monthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay();
+        LocalDate today = LocalDate.now();
+        LocalDateTime todayStart = today.atStartOfDay();
+        LocalDateTime todayEnd = today.atTime(LocalTime.MAX);
+        LocalDateTime monthStart = today.withDayOfMonth(1).atStartOfDay();
 
         BigDecimal todaySales = orderRepository.sumTotalAmountByCreatedAtBetween(todayStart, todayEnd);
-        long todayOrderCount = orderRepository.countByCreatedAtBetween(todayStart, todayEnd);
-
         BigDecimal monthlySales = orderRepository.sumTotalAmountByCreatedAtBetween(monthStart, todayEnd);
-        long monthlyOrderCount = orderRepository.countByCreatedAtBetween(monthStart, todayEnd);
 
-        long totalUsers = userRepository.count();
-        long totalProducts = productRepository.count();
-
-        return SalesStatsResponse.builder()
-                .todaySales(todaySales)
-                .todayOrderCount(todayOrderCount)
-                .monthlySales(monthlySales)
-                .monthlyOrderCount(monthlyOrderCount)
-                .totalUsers(totalUsers)
-                .totalProducts(totalProducts)
-                .build();
+        return new SalesStatsResponse(
+                todaySales,
+                orderRepository.countByCreatedAtBetween(todayStart, todayEnd),
+                monthlySales,
+                orderRepository.countByCreatedAtBetween(monthStart, todayEnd),
+                userRepository.count(),
+                productRepository.count()
+        );
     }
 }
