@@ -190,6 +190,30 @@ export default function AdminPage() {
         </svg>
       ),
     },
+    {
+      href: '/admin/articles',
+      title: '기사 관리',
+      description: '뉴스 소스 및 기사 게시 관리',
+      iconBg: 'bg-indigo-100',
+      iconColor: 'text-indigo-600',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+        </svg>
+      ),
+    },
+    {
+      href: '/admin/quality',
+      title: '품질 관리',
+      description: '콘텐츠 품질 점수 및 플래그 관리',
+      iconBg: 'bg-yellow-100',
+      iconColor: 'text-yellow-600',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    },
   ];
 
   return (

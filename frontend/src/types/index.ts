@@ -123,6 +123,12 @@ export interface CommunityPostResponse {
   content: string;
   category: CommunityCategory;
   createdAt: string;
+  qualityScore?: number;
+  qualityGrade?: QualityGrade;
+  translatedTitle?: string;
+  translatedContent?: string;
+  originalLanguage?: string;
+  translationStatus?: TranslationStatus;
 }
 
 export interface CommunityPostRequest {
@@ -579,4 +585,78 @@ export interface CommentResponse {
   replies: CommentResponse[];
   createdAt: string;
   updatedAt: string;
+}
+
+// === 뉴스 기사 ===
+
+export type ArticleCategory = 'HEALTH' | 'WELFARE' | 'ELDERLY_CARE' | 'SAFETY' | 'POLICY' | 'LIFESTYLE';
+export type ArticleStatus = 'CRAWLED' | 'SUMMARIZED' | 'PUBLISHED' | 'REJECTED' | 'FAILED';
+
+export interface CrawledArticleResponse {
+  id: number;
+  originalTitle: string;
+  summary: string;
+  originalUrl: string;
+  thumbnailUrl?: string;
+  author?: string;
+  publishedAt: string;
+  category: ArticleCategory;
+  qualityScore: number;
+  viewCount: number;
+}
+
+export interface ArticleDetailResponse extends CrawledArticleResponse {
+  originalContent: string;
+  translatedTitle?: string;
+  translatedContent?: string;
+  status: ArticleStatus;
+}
+
+// === 품질 점수 ===
+
+export type QualityGrade = 'EXCELLENT' | 'GOOD' | 'NORMAL' | 'LOW' | 'SPAM';
+export type TranslationStatus = 'PENDING' | 'TRANSLATED' | 'FAILED' | 'SKIPPED';
+
+export interface QualityScoreBreakdown {
+  contentLength: number;
+  titleQuality: number;
+  relevance: number;
+  structure: number;
+  originality: number;
+  authorCredibility: number;
+}
+
+// === 관리자 - 뉴스 소스 ===
+
+export interface NewsSourceResponse {
+  id: number;
+  name: string;
+  baseUrl: string;
+  category: ArticleCategory;
+  enabled: boolean;
+  lastCrawledAt?: string;
+}
+
+export interface NewsSourceRequest {
+  name: string;
+  baseUrl: string;
+  crawlPattern: string;
+  articlePattern: string;
+  category: ArticleCategory;
+  enabled: boolean;
+}
+
+export interface CrawlStatsResponse {
+  totalSources: number;
+  totalArticles: number;
+  publishedArticles: number;
+  rejectedArticles: number;
+  pendingArticles: number;
+}
+
+export interface QualityStatsResponse {
+  averageScore: number;
+  gradeDistribution: Record<QualityGrade, number>;
+  totalScored: number;
+  flaggedCount: number;
 }

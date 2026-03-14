@@ -72,6 +72,20 @@ oauth:
     user-info-uri: https://www.googleapis.com/oauth2/v2/userinfo
     scope: email+profile
 
+crawling:
+  enabled: true
+  user-agent: "UnaloneBot/1.0"
+  timeout: 10000
+  rate-limit-ms: 1000
+  auto-publish-threshold: 70
+  max-articles-per-source: 10
+
+translation:
+  enabled: true
+  target-language: en
+  batch-size: 50
+  max-retries: 3
+
 logging:
   level:
     com.project: DEBUG

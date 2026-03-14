@@ -6,11 +6,14 @@ import Link from 'next/link';
 import PageLayout from '@/components/common/PageLayout';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import CategoryBadge from '@/components/common/CategoryBadge';
+import QualityBadge from '@/components/common/QualityBadge';
+import TranslationToggle from '@/components/common/TranslationToggle';
 import CommentSection from '@/components/common/CommentSection';
 import apiClient from '@/lib/api';
 import { isLoggedIn, getUser } from '@/lib/auth';
+import { getPostQualityDetail } from '@/lib/community';
 import { formatDateTimeFull } from '@/lib/utils';
-import { ApiResponse, CommunityPostResponse } from '@/types';
+import { ApiResponse, CommunityPostResponse, QualityScoreBreakdown } from '@/types';
 
 export default function CommunityDetailPage() {
   const router = useRouter();
@@ -20,6 +23,9 @@ export default function CommunityDetailPage() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<number | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [showTranslation, setShowTranslation] = useState(false);
+  const [qualityDetail, setQualityDetail] = useState<QualityScoreBreakdown | null>(null);
+  const [showQualityDetail, setShowQualityDetail] = useState(false);
 
   useEffect(() => {
     if (isLoggedIn()) {
@@ -35,7 +41,17 @@ export default function CommunityDetailPage() {
       const res = await apiClient.get<ApiResponse<CommunityPostResponse>>(
         `/api/community/posts/${postId}`
       );
-      setPost(res.data.data);
+      const postData = res.data.data;
+      setPost(postData);
+      // Fetch quality detail if available
+      if (postData.qualityScore !== undefined) {
+        try {
+          const qd = await getPostQualityDetail(Number(postId));
+          setQualityDetail(qd);
+        } catch {
+          // quality detail not available
+        }
+      }
     } catch {
       console.error('Failed to fetch post');
     } finally {
@@ -79,10 +95,20 @@ export default function CommunityDetailPage() {
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <div className="p-6 border-b border-gray-100">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
               {post.category && <CategoryBadge category={post.category} />}
+              {post.qualityGrade && <QualityBadge grade={post.qualityGrade} score={post.qualityScore} />}
+              {post.translationStatus && (
+                <TranslationToggle
+                  translationStatus={post.translationStatus}
+                  showTranslation={showTranslation}
+                  onToggle={() => setShowTranslation(!showTranslation)}
+                />
+              )}
             </div>
-            <h1 className="text-xl font-bold text-gray-900 mb-3">{post.title}</h1>
+            <h1 className="text-xl font-bold text-gray-900 mb-3">
+              {showTranslation && post.translatedTitle ? post.translatedTitle : post.title}
+            </h1>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <span className="font-medium">{post.userName}</span>
@@ -100,8 +126,54 @@ export default function CommunityDetailPage() {
             </div>
           </div>
           <div className="p-6">
-            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{post.content}</p>
+            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+              {showTranslation && post.translatedContent ? post.translatedContent : post.content}
+            </p>
           </div>
+
+          {/* Quality Score Breakdown */}
+          {qualityDetail && (
+            <div className="px-6 pb-6">
+              <button
+                onClick={() => setShowQualityDetail(!showQualityDetail)}
+                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-4 w-4 transition-transform ${showQualityDetail ? 'rotate-90' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                품질 점수 상세
+              </button>
+              {showQualityDetail && (
+                <div className="mt-3 bg-gray-50 rounded-lg p-4 space-y-2">
+                  {([
+                    { key: 'contentLength' as const, label: '콘텐츠 길이' },
+                    { key: 'titleQuality' as const, label: '제목 품질' },
+                    { key: 'relevance' as const, label: '관련성' },
+                    { key: 'structure' as const, label: '구조' },
+                    { key: 'originality' as const, label: '독창성' },
+                    { key: 'authorCredibility' as const, label: '작성자 신뢰도' },
+                  ]).map(({ key, label }) => (
+                    <div key={key} className="flex items-center gap-3">
+                      <span className="w-24 text-xs text-gray-500">{label}</span>
+                      <div className="flex-1 bg-gray-200 rounded-full h-2">
+                        <div
+                          className="h-full bg-emerald-500 rounded-full"
+                          style={{ width: `${qualityDetail[key]}%` }}
+                        />
+                      </div>
+                      <span className="w-8 text-xs text-gray-600 text-right">{qualityDetail[key]}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

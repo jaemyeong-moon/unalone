@@ -29,11 +29,13 @@ export default function Header() {
     ...(user ? [
       { href: '/checkin', label: '체크인' },
       { href: '/health', label: '건강일지' },
+      { href: '/articles', label: '뉴스' },
       { href: '/care', label: '이웃 돌봄' },
       { href: '/community', label: '커뮤니티' },
       { href: '/guardians', label: '보호자' },
       { href: '/profile', label: '프로필' },
     ] : [
+      { href: '/articles', label: '뉴스' },
       { href: '/community', label: '커뮤니티' },
     ]),
     ...(user?.role === 'ROLE_ADMIN' ? [{ href: '/admin', label: '관리자' }] : []),

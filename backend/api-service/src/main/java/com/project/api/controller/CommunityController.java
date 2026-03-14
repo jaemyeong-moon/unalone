@@ -2,6 +2,7 @@ package com.project.api.controller;
 
 import com.project.api.dto.community.CommunityPostRequest;
 import com.project.api.dto.community.CommunityPostResponse;
+import com.project.api.dto.quality.QualityDetailResponse;
 import com.project.api.service.CommunityService;
 import com.project.common.dto.ApiResponse;
 import jakarta.validation.Valid;
@@ -49,5 +50,17 @@ public class CommunityController {
         Long userId = (Long) authentication.getPrincipal();
         communityService.deletePost(userId, postId);
         return ResponseEntity.ok(ApiResponse.ok(null, "게시글 삭제 완료"));
+    }
+
+    @GetMapping("/quality")
+    public ResponseEntity<ApiResponse<Page<CommunityPostResponse>>> getPostsByQuality(
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.ok(communityService.getPostsByQuality(pageable)));
+    }
+
+    @GetMapping("/{postId}/quality")
+    public ResponseEntity<ApiResponse<QualityDetailResponse>> getPostQualityDetail(
+            @PathVariable Long postId) {
+        return ResponseEntity.ok(ApiResponse.ok(communityService.getPostQualityDetail(postId)));
     }
 }
