@@ -1,0 +1,64 @@
+http:
+  routers:
+    admin-api:
+      rule: "PathPrefix(`/api/admin`)"
+      entryPoints:
+        - websecure
+      service: admin-service
+      priority: 200
+      tls:
+        certResolver: letsencrypt
+
+    api:
+      rule: "PathPrefix(`/api`)"
+      entryPoints:
+        - websecure
+      service: api-service
+      priority: 100
+      tls:
+        certResolver: letsencrypt
+
+    frontend:
+      rule: "PathPrefix(`/`)"
+      entryPoints:
+        - websecure
+      service: frontend
+      priority: 1
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    api-service:
+      loadBalancer:
+        servers:
+          - url: "http://api-service:8080"
+
+    admin-service:
+      loadBalancer:
+        servers:
+          - url: "http://admin-service:8081"
+
+    frontend:
+      loadBalancer:
+        servers:
+          - url: "http://frontend:3000"
+
+  middlewares:
+    security-headers:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        frameDeny: true
+        customResponseHeaders:
+          X-Powered-By: ""
+          Server: ""
+
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1s
