@@ -1,0 +1,38 @@
+http:
+  routers:
+    admin-api:
+      rule: "PathPrefix(`/api/admin`)"
+      entryPoints:
+        - web
+      service: admin-service
+      priority: 200
+
+    api:
+      rule: "PathPrefix(`/api`)"
+      entryPoints:
+        - web
+      service: api-service
+      priority: 100
+
+    frontend:
+      rule: "PathPrefix(`/`)"
+      entryPoints:
+        - web
+      service: frontend
+      priority: 1
+
+  services:
+    api-service:
+      loadBalancer:
+        servers:
+          - url: "http://api-service:8080"
+
+    admin-service:
+      loadBalancer:
+        servers:
+          - url: "http://admin-service:8081"
+
+    frontend:
+      loadBalancer:
+        servers:
+          - url: "http://frontend:3000"

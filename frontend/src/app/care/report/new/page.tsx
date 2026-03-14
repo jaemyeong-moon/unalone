@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import PageLayout from '@/components/common/PageLayout';
 import FormField from '@/components/common/FormField';
@@ -44,6 +44,14 @@ interface ReportForm {
 }
 
 export default function NewReportPage() {
+  return (
+    <Suspense fallback={<PageLayout maxWidth="max-w-2xl"><LoadingSpinner /></PageLayout>}>
+      <NewReportContent />
+    </Suspense>
+  );
+}
+
+function NewReportContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const visitIdParam = searchParams.get('visitId');
