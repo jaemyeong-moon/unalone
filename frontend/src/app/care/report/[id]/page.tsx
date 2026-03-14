@@ -7,8 +7,9 @@ import PageLayout from '@/components/common/PageLayout';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import AlertBanner from '@/components/common/AlertBanner';
 import ConditionBadge from '@/components/common/ConditionBadge';
+import RatingStars from '@/components/care/RatingStars';
 import { isLoggedIn } from '@/lib/auth';
-import { getVisitReport } from '@/lib/care';
+import { getVisitReport, rateVisit } from '@/lib/care';
 import { getErrorMessage } from '@/lib/api';
 import { formatDateTime } from '@/lib/utils';
 import { CareVisitReport } from '@/types';
@@ -31,7 +32,9 @@ export default function ReportDetailPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [report, setReport] = useState<CareVisitReport | null>(null);
+  const [rated, setRated] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -53,6 +56,17 @@ export default function ReportDetailPage() {
     }
   };
 
+  const handleRateSubmit = async (rating: number, review: string) => {
+    if (!report) return;
+    try {
+      await rateVisit(report.visitId, rating, review);
+      setSuccess('평가가 제출되었습니다');
+      setRated(true);
+    } catch (err) {
+      setError(getErrorMessage(err, '평가 제출에 실패했습니다'));
+    }
+  };
+
   if (loading) {
     return (
       <PageLayout maxWidth="max-w-2xl">
@@ -61,10 +75,23 @@ export default function ReportDetailPage() {
     );
   }
 
-  if (error || !report) {
+  if (error && !report) {
     return (
       <PageLayout maxWidth="max-w-2xl">
         <AlertBanner message={error || '보고서를 찾을 수 없습니다'} variant="error" />
+        <div className="text-center mt-4">
+          <Link href="/care" className="text-sm text-emerald-600 hover:underline">
+            돌봄 메인으로 돌아가기
+          </Link>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (!report) {
+    return (
+      <PageLayout maxWidth="max-w-2xl">
+        <AlertBanner message="보고서를 찾을 수 없습니다" variant="error" />
         <div className="text-center mt-4">
           <Link href="/care" className="text-sm text-emerald-600 hover:underline">
             돌봄 메인으로 돌아가기
@@ -80,6 +107,9 @@ export default function ReportDetailPage() {
         <h1 className="text-2xl font-bold text-gray-900">방문 보고서</h1>
         <p className="text-sm text-gray-500 mt-1">작성일: {formatDateTime(report.createdAt)}</p>
       </div>
+
+      {error && <AlertBanner message={error} variant="error" />}
+      {success && <AlertBanner message={success} variant="success" />}
 
       <div className="space-y-6">
         {/* 방문 정보 */}
@@ -136,6 +166,21 @@ export default function ReportDetailPage() {
             </div>
           </div>
         )}
+
+        {/* 방문 평가 */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">방문 평가</h2>
+          {rated ? (
+            <div className="text-center py-4">
+              <svg className="h-10 w-10 text-emerald-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm text-gray-600">평가가 완료되었습니다</p>
+            </div>
+          ) : (
+            <RatingStars onSubmit={handleRateSubmit} />
+          )}
+        </div>
 
         <div className="flex gap-3">
           <Link

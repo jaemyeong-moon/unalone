@@ -106,3 +106,13 @@ export async function getVisitReports(params: { page?: number; size?: number } =
   const res = await apiClient.get<ApiResponse<PageResponse<CareVisitReport>>>('/api/care/reports', { params });
   return res.data.data;
 }
+
+// === 평가 ===
+
+export async function rateVisit(matchId: number, rating: number, review: string) {
+  const res = await apiClient.post<ApiResponse<void>>(`/api/care/matches/${matchId}/rate`, {
+    rating,
+    review,
+  });
+  return res.data;
+}
