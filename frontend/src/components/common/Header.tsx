@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getUser, isLoggedIn, logout } from '@/lib/auth';
+import NotificationBell from '@/components/common/NotificationBell';
 
 export default function Header() {
   const pathname = usePathname();
@@ -67,7 +68,8 @@ export default function Header() {
               ))}
             </nav>
             {user ? (
-              <div className="flex items-center gap-3 ml-2">
+              <div className="flex items-center gap-2 ml-2">
+                <NotificationBell />
                 <span className="text-sm text-emerald-200">{user.name}</span>
                 <button
                   onClick={handleLogout}
@@ -118,6 +120,19 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
+            {user && (
+              <Link
+                href="/notifications"
+                onClick={() => setMenuOpen(false)}
+                className={`block px-4 py-2 rounded-lg text-sm font-medium ${
+                  pathname === '/notifications'
+                    ? 'bg-emerald-800 text-white'
+                    : 'text-emerald-100 hover:bg-emerald-600'
+                }`}
+              >
+                알림
+              </Link>
+            )}
             {user ? (
               <button
                 onClick={handleLogout}

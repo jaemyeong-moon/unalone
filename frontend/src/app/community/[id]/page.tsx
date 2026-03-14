@@ -6,6 +6,7 @@ import Link from 'next/link';
 import PageLayout from '@/components/common/PageLayout';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import CategoryBadge from '@/components/common/CategoryBadge';
+import CommentSection from '@/components/common/CommentSection';
 import apiClient from '@/lib/api';
 import { isLoggedIn, getUser } from '@/lib/auth';
 import { formatDateTimeFull } from '@/lib/utils';
@@ -102,6 +103,14 @@ export default function CommunityDetailPage() {
             <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{post.content}</p>
           </div>
         </div>
+      )}
+
+      {/* Comments */}
+      {post && (
+        <CommentSection
+          postId={post.id}
+          currentUserId={userId}
+        />
       )}
     </PageLayout>
   );

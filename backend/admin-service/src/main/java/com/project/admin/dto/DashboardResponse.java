@@ -10,6 +10,13 @@ public record DashboardResponse(
         long activeAlerts,
         long warningAlerts,
         long dangerAlerts,
-        long criticalAlerts
+        long criticalAlerts,
+        long activeEscalations,
+        long missedCheckIns,
+        long activeVolunteers,
+        long pendingVolunteers,
+        long activeCareMatches,
+        double avgHealthScore,
+        long criticalHealthAlerts
 ) {
 }

@@ -157,6 +157,64 @@ export interface DashboardResponse {
   warningAlerts: number;
   dangerAlerts: number;
   criticalAlerts: number;
+  activeEscalations: number;
+  missedCheckIns: number;
+  activeVolunteers: number;
+  pendingVolunteers: number;
+  activeCareMatches: number;
+  avgHealthScore: number;
+  criticalHealthAlerts: number;
+}
+
+// === Admin 에스컬레이션 ===
+
+export type EscalationStage = 'REMINDER' | 'WARNING' | 'DANGER' | 'CRITICAL';
+
+export interface EscalationAdminResponse {
+  id: number;
+  userId: number;
+  userName: string;
+  stage: EscalationStage;
+  triggeredAt: string;
+  resolvedAt: string | null;
+  resolved: boolean;
+  notifiedContacts: string | null;
+}
+
+// === Admin 돌봄 방문 ===
+
+export interface CareVisitAdminResponse {
+  id: number;
+  careMatchId: number;
+  volunteerId: number;
+  receiverId: number;
+  scheduledDate: string;
+  scheduledTime: string;
+  status: string;
+  reportContent: string | null;
+  receiverCondition: ReceiverCondition | null;
+  specialNotes: string | null;
+  visitedAt: string | null;
+  createdAt: string;
+}
+
+// === Admin 자원봉사자 ===
+
+export interface VolunteerAdminResponse {
+  id: number;
+  userId: number;
+  availableDays: string;
+  availableTimeStart: string;
+  availableTimeEnd: string;
+  radius: number;
+  latitude: number;
+  longitude: number;
+  introduction: string;
+  status: string;
+  trustScore: number;
+  totalVisits: number;
+  approvedAt: string | null;
+  createdAt: string;
 }
 
 // === 스마트 체크인 ===
@@ -480,4 +538,45 @@ export interface CareVisitReport {
   scheduledAt: string;
   duration: string;
   createdAt: string;
+}
+
+// === 알림 (Notification) ===
+
+export type NotificationType =
+  | 'CHECKIN_REMINDER'
+  | 'ESCALATION'
+  | 'HEALTH_ALERT'
+  | 'CARE_MATCH'
+  | 'CARE_VISIT'
+  | 'COMMUNITY_REPLY'
+  | 'SYSTEM';
+
+export interface NotificationResponse {
+  id: number;
+  type: NotificationType;
+  title: string;
+  message: string;
+  relatedId: number | null;
+  relatedType: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
+// === 커뮤니티 댓글 ===
+
+export interface CommentRequest {
+  content: string;
+  parentId?: number | null;
+}
+
+export interface CommentResponse {
+  id: number;
+  postId: number;
+  userId: number;
+  authorName: string;
+  content: string;
+  parentId: number | null;
+  replies: CommentResponse[];
+  createdAt: string;
+  updatedAt: string;
 }

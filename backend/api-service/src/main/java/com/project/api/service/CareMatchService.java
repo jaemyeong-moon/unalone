@@ -3,6 +3,7 @@ package com.project.api.service;
 import com.project.api.domain.CareMatch;
 import com.project.api.domain.Volunteer;
 import com.project.api.domain.enums.CareMatchStatus;
+import com.project.api.domain.enums.NotificationType;
 import com.project.api.dto.care.CareMatchResponse;
 import com.project.api.exception.BusinessException;
 import com.project.api.repository.CareMatchRepository;
@@ -25,6 +26,7 @@ public class CareMatchService {
     private final CareMatchRepository careMatchRepository;
     private final VolunteerRepository volunteerRepository;
     private final EventPublisher eventPublisher;
+    private final NotificationService notificationService;
 
     @Transactional
     public CareMatchResponse createMatch(Long userId, Long receiverId) {
@@ -46,6 +48,26 @@ public class CareMatchService {
         eventPublisher.publish(KafkaConfig.TOPIC_CARE_MATCH_EVENTS,
                 new CareMatchCreatedEvent(careMatch.getId(), volunteer.getId(),
                         receiverId, careMatch.getDistance()));
+
+        // 자원봉사자에게 매칭 알림
+        notificationService.createNotification(
+                userId,
+                NotificationType.CARE_MATCH,
+                "돌봄 매칭 생성",
+                "새로운 돌봄 매칭이 생성되었습니다.",
+                careMatch.getId(),
+                "CARE_MATCH"
+        );
+
+        // 돌봄 대상자에게 매칭 알림
+        notificationService.createNotification(
+                receiverId,
+                NotificationType.CARE_MATCH,
+                "돌봄 매칭 알림",
+                "새로운 돌봄 자원봉사자가 매칭되었습니다.",
+                careMatch.getId(),
+                "CARE_MATCH"
+        );
 
         return CareMatchResponse.from(careMatch);
     }

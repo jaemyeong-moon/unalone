@@ -5,6 +5,7 @@ import com.project.api.domain.User;
 import com.project.api.dto.community.CommunityPostRequest;
 import com.project.api.dto.community.CommunityPostResponse;
 import com.project.api.exception.BusinessException;
+import com.project.api.repository.CommentRepository;
 import com.project.api.repository.CommunityPostRepository;
 import com.project.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ public class CommunityService {
 
     private final CommunityPostRepository postRepository;
     private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
 
     @Transactional
     public CommunityPostResponse createPost(Long userId, CommunityPostRequest request) {
@@ -41,17 +43,17 @@ public class CommunityService {
         if (category != null && !category.isBlank()) {
             CommunityPost.PostCategory parsed = parseCategory(category);
             return postRepository.findByCategoryWithUser(parsed, pageable)
-                    .map(CommunityPostResponse::from);
+                    .map(post -> CommunityPostResponse.from(post, commentRepository.countByPostId(post.getId())));
         }
         return postRepository.findAllWithUser(pageable)
-                .map(CommunityPostResponse::from);
+                .map(post -> CommunityPostResponse.from(post, commentRepository.countByPostId(post.getId())));
     }
 
     @Transactional(readOnly = true)
     public CommunityPostResponse getPost(Long postId) {
-        return postRepository.findById(postId)
-                .map(CommunityPostResponse::from)
+        CommunityPost post = postRepository.findById(postId)
                 .orElseThrow(() -> BusinessException.notFound("게시글을 찾을 수 없습니다"));
+        return CommunityPostResponse.from(post, commentRepository.countByPostId(postId));
     }
 
     @Transactional

@@ -1,6 +1,7 @@
 package com.project.api.service;
 
 import com.project.api.domain.*;
+import com.project.api.domain.enums.NotificationType;
 import com.project.api.dto.schedule.EscalationResponse;
 import com.project.api.exception.BusinessException;
 import com.project.api.kafka.producer.ApiEventProducer;
@@ -31,6 +32,7 @@ public class EscalationService {
     private final CheckInRepository checkInRepository;
     private final UserRepository userRepository;
     private final ApiEventProducer eventProducer;
+    private final NotificationService notificationService;
 
     /**
      * 미응답 체크인에 대한 에스컬레이션을 생성하거나 단계를 진행합니다.
@@ -73,6 +75,16 @@ public class EscalationService {
             log.warn("에스컬레이션 단계 진행: userId={}, {} -> {}", userId, previousLevel, targetStage);
             publishEscalationEvent(userId, escalation.getId(), previousLevel, targetStage.name());
 
+            // 에스컬레이션 알림 전송
+            notificationService.createNotification(
+                    userId,
+                    NotificationType.ESCALATION,
+                    "안부 확인 에스컬레이션",
+                    "체크인 미응답으로 에스컬레이션 단계가 " + targetStage.name() + "(으)로 진행되었습니다.",
+                    escalation.getId(),
+                    "ESCALATION"
+            );
+
         } else {
             // 새 에스컬레이션 생성
             Escalation escalation = Escalation.builder()
@@ -85,6 +97,16 @@ public class EscalationService {
 
             log.warn("에스컬레이션 생성: userId={}, stage={}", userId, targetStage);
             publishEscalationEvent(userId, escalation.getId(), null, targetStage.name());
+
+            // 에스컬레이션 알림 전송
+            notificationService.createNotification(
+                    userId,
+                    NotificationType.ESCALATION,
+                    "안부 확인 에스컬레이션",
+                    "체크인 미응답으로 에스컬레이션이 " + targetStage.name() + " 단계로 생성되었습니다.",
+                    escalation.getId(),
+                    "ESCALATION"
+            );
         }
     }
 
