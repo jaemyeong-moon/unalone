@@ -3,6 +3,7 @@ package com.project.api.controller;
 import com.project.api.dto.schedule.CheckInScheduleRequest;
 import com.project.api.dto.schedule.CheckInScheduleResponse;
 import com.project.api.dto.schedule.EscalationResponse;
+import com.project.api.dto.schedule.PauseRequest;
 import com.project.api.service.CheckInScheduleService;
 import com.project.api.service.EscalationService;
 import com.project.common.dto.ApiResponse;
@@ -36,6 +37,30 @@ public class CheckInScheduleController {
         return ResponseEntity.ok(ApiResponse.ok(
                 checkInScheduleService.createOrUpdateSchedule(userId, request),
                 "체크인 스케줄이 업데이트되었습니다"));
+    }
+
+    /**
+     * 체크인 스케줄을 일시 중지합니다.
+     */
+    @PostMapping("/schedule/pause")
+    public ResponseEntity<ApiResponse<CheckInScheduleResponse>> pauseSchedule(
+            Authentication authentication,
+            @RequestBody PauseRequest request) {
+        Long userId = (Long) authentication.getPrincipal();
+        return ResponseEntity.ok(ApiResponse.ok(
+                checkInScheduleService.pauseSchedule(userId, request),
+                "체크인이 일시 중지되었습니다"));
+    }
+
+    /**
+     * 일시 중지된 체크인 스케줄을 재개합니다.
+     */
+    @PostMapping("/schedule/resume")
+    public ResponseEntity<ApiResponse<CheckInScheduleResponse>> resumeSchedule(Authentication authentication) {
+        Long userId = (Long) authentication.getPrincipal();
+        return ResponseEntity.ok(ApiResponse.ok(
+                checkInScheduleService.resumeSchedule(userId),
+                "체크인이 재활성화되었습니다"));
     }
 
     @GetMapping("/escalations")

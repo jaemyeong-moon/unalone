@@ -4,6 +4,7 @@ import com.project.api.domain.CheckInSchedule;
 import com.project.api.domain.User;
 import com.project.api.dto.schedule.CheckInScheduleRequest;
 import com.project.api.dto.schedule.CheckInScheduleResponse;
+import com.project.api.dto.schedule.PauseRequest;
 import com.project.api.exception.BusinessException;
 import com.project.api.repository.CheckInScheduleRepository;
 import com.project.api.repository.UserRepository;
@@ -15,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
+import java.time.temporal.ChronoUnit;
 
 @Slf4j
 @Service
@@ -52,6 +53,8 @@ public class CheckInScheduleService {
                     .intervalHours(request.intervalHours() != null ? request.intervalHours() : 24)
                     .preferredTime(request.preferredTime() != null ? request.preferredTime() : LocalTime.of(9, 0))
                     .activeDays(activeDaysStr)
+                    .quietStartTime(request.quietStartTime())
+                    .quietEndTime(request.quietEndTime())
                     .pauseUntil(request.pauseUntil())
                     .build();
         } else {
@@ -60,6 +63,9 @@ public class CheckInScheduleService {
                     request.preferredTime(),
                     activeDaysStr
             );
+            if (request.quietStartTime() != null || request.quietEndTime() != null) {
+                schedule.updateQuietHours(request.quietStartTime(), request.quietEndTime());
+            }
             if (request.pauseUntil() != null) {
                 schedule.pause(request.pauseUntil());
             }
@@ -75,10 +81,55 @@ public class CheckInScheduleService {
         return CheckInScheduleResponse.from(schedule);
     }
 
+    /**
+     * 체크인 스케줄을 일시 중지합니다 (최대 30일).
+     */
     @Transactional
-    public void resumeSchedule(Long userId) {
+    public CheckInScheduleResponse pauseSchedule(Long userId, PauseRequest request) {
         CheckInSchedule schedule = checkInScheduleRepository.findByUserId(userId)
                 .orElseThrow(() -> BusinessException.notFound("체크인 스케줄이 설정되지 않았습니다"));
+
+        if (schedule.isPaused()) {
+            throw BusinessException.badRequest("이미 일시 중지된 스케줄입니다");
+        }
+
+        LocalDate endDate = request.pauseEndDate();
+        if (endDate == null) {
+            throw BusinessException.badRequest("일시 중지 종료일을 입력해주세요");
+        }
+
+        long daysBetween = ChronoUnit.DAYS.between(LocalDate.now(), endDate);
+        if (daysBetween > 30) {
+            throw BusinessException.badRequest("임시 비활성 기간은 최대 30일입니다");
+        }
+        if (daysBetween < 0) {
+            throw BusinessException.badRequest("비활성 종료일은 오늘 이후여야 합니다");
+        }
+
+        schedule.pause(request.reason(), endDate);
+
+        // 일시 중지 종료 후 다음 체크인 시간 계산
+        LocalDateTime nextDue = endDate.atTime(schedule.getPreferredTime());
+        schedule.updateNextCheckInDue(nextDue);
+
+        checkInScheduleRepository.save(schedule);
+        log.info("체크인 스케줄 일시 중지: userId={}, reason={}, until={}", userId, request.reason(), endDate);
+
+        return CheckInScheduleResponse.from(schedule);
+    }
+
+    /**
+     * 일시 중지된 체크인 스케줄을 재개합니다.
+     */
+    @Transactional
+    public CheckInScheduleResponse resumeSchedule(Long userId) {
+        CheckInSchedule schedule = checkInScheduleRepository.findByUserId(userId)
+                .orElseThrow(() -> BusinessException.notFound("체크인 스케줄이 설정되지 않았습니다"));
+
+        if (!schedule.isPaused()) {
+            throw BusinessException.badRequest("일시 중지 상태가 아닙니다");
+        }
+
         schedule.resume();
 
         LocalDateTime nextDue = calculateNextCheckInDue(schedule);
@@ -86,6 +137,8 @@ public class CheckInScheduleService {
 
         checkInScheduleRepository.save(schedule);
         log.info("체크인 스케줄 재활성화: userId={}", userId);
+
+        return CheckInScheduleResponse.from(schedule);
     }
 
     private void validateRequest(CheckInScheduleRequest request) {
@@ -95,7 +148,7 @@ public class CheckInScheduleService {
             }
         }
         if (request.pauseUntil() != null) {
-            long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), request.pauseUntil());
+            long daysBetween = ChronoUnit.DAYS.between(LocalDate.now(), request.pauseUntil());
             if (daysBetween > 30) {
                 throw BusinessException.badRequest("임시 비활성 기간은 최대 30일입니다");
             }
@@ -111,8 +164,12 @@ public class CheckInScheduleService {
     public LocalDateTime calculateNextCheckInDue(CheckInSchedule schedule) {
         if (schedule.isPaused()) {
             // 일시 중지 종료 후 선호 시간에 체크인
-            return schedule.getPauseUntil()
-                    .atTime(schedule.getPreferredTime());
+            LocalDate resumeDate = schedule.getPauseEndDate() != null
+                    ? schedule.getPauseEndDate()
+                    : schedule.getPauseUntil();
+            if (resumeDate != null) {
+                return resumeDate.atTime(schedule.getPreferredTime());
+            }
         }
 
         LocalDateTime now = LocalDateTime.now();

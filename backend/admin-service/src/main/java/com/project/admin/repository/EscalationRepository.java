@@ -9,7 +9,11 @@ public interface EscalationRepository extends JpaRepository<Escalation, Long> {
 
     long countByResolvedFalse();
 
+    long countByStageAndResolvedFalse(String stage);
+
     Page<Escalation> findByResolvedFalseOrderByTriggeredAtDesc(Pageable pageable);
 
     Page<Escalation> findByResolvedFalseAndStageOrderByTriggeredAtDesc(String stage, Pageable pageable);
+
+    Page<Escalation> findByUserIdOrderByTriggeredAtDesc(Long userId, Pageable pageable);
 }

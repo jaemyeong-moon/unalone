@@ -15,11 +15,25 @@ public interface CheckInScheduleRepository extends JpaRepository<CheckInSchedule
     Optional<CheckInSchedule> findByUserId(Long userId);
 
     @Query("SELECT cs FROM CheckInSchedule cs JOIN FETCH cs.user " +
+           "WHERE cs.enabled = true " +
+           "AND cs.user.status = 'ACTIVE'")
+    List<CheckInSchedule> findByUserAndEnabledTrue();
+
+    @Query("SELECT cs FROM CheckInSchedule cs JOIN FETCH cs.user " +
            "WHERE cs.nextCheckInDue <= :now " +
            "AND (cs.pauseUntil IS NULL OR cs.pauseUntil < :today) " +
+           "AND cs.paused = false " +
+           "AND cs.enabled = true " +
            "AND cs.user.status = 'ACTIVE'")
     List<CheckInSchedule> findOverdueSchedules(@Param("now") LocalDateTime now,
                                                 @Param("today") LocalDate today);
+
+    @Query("SELECT cs FROM CheckInSchedule cs JOIN FETCH cs.user " +
+           "WHERE cs.enabled = true " +
+           "AND cs.paused = false " +
+           "AND (cs.pauseUntil IS NULL OR cs.pauseUntil < :today) " +
+           "AND cs.user.status = 'ACTIVE'")
+    List<CheckInSchedule> findAllByEnabledTrueAndIsPausedFalse(@Param("today") LocalDate today);
 
     @Query("SELECT cs FROM CheckInSchedule cs JOIN FETCH cs.user " +
            "WHERE cs.user.status = 'ACTIVE' " +

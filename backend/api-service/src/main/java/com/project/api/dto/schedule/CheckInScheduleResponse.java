@@ -16,9 +16,17 @@ public record CheckInScheduleResponse(
         @JsonFormat(pattern = "HH:mm")
         LocalTime preferredTime,
         List<String> activeDays,
+        @JsonFormat(pattern = "HH:mm")
+        LocalTime quietStartTime,
+        @JsonFormat(pattern = "HH:mm")
+        LocalTime quietEndTime,
+        boolean paused,
+        String pauseReason,
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        LocalDate pauseEndDate,
         @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDate pauseUntil,
-        boolean paused,
+        boolean enabled,
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime nextCheckInDue,
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
@@ -36,8 +44,13 @@ public record CheckInScheduleResponse(
                 schedule.getIntervalHours(),
                 schedule.getPreferredTime(),
                 days,
-                schedule.getPauseUntil(),
+                schedule.getQuietStartTime(),
+                schedule.getQuietEndTime(),
                 schedule.isPaused(),
+                schedule.getPauseReason(),
+                schedule.getPauseEndDate(),
+                schedule.getPauseUntil(),
+                schedule.isEnabled(),
                 schedule.getNextCheckInDue(),
                 schedule.getCreatedAt(),
                 schedule.getUpdatedAt()

@@ -23,4 +23,22 @@ public interface EscalationRepository extends JpaRepository<Escalation, Long> {
     List<Escalation> findActiveByStage(@Param("stage") EscalationStage stage);
 
     long countByUserIdAndResolvedFalse(Long userId);
+
+    @Query("SELECT e FROM Escalation e JOIN FETCH e.user WHERE e.resolved = false AND e.status = 'ACTIVE'")
+    List<Escalation> findAllActiveEscalations();
+
+    @Query("SELECT e FROM Escalation e JOIN FETCH e.user WHERE e.resolved = false AND e.status = 'ACTIVE'")
+    Page<Escalation> findAllActiveEscalationsPaged(Pageable pageable);
+
+    @Query("SELECT e FROM Escalation e JOIN FETCH e.user WHERE e.resolved = false AND e.status = 'ACTIVE' AND e.stage = :stage")
+    Page<Escalation> findAllActiveEscalationsByStage(@Param("stage") EscalationStage stage, Pageable pageable);
+
+    long countByStageAndResolvedFalse(EscalationStage stage);
+
+    @Query("SELECT e FROM Escalation e JOIN FETCH e.user " +
+           "WHERE e.user.id = :userId AND e.status = 'ACTIVE' AND e.resolved = false " +
+           "ORDER BY e.triggeredAt DESC")
+    List<Escalation> findByUserAndStatusActiveOrderByTriggeredAtDesc(@Param("userId") Long userId);
+
+    Page<Escalation> findByUserIdAndResolvedFalseOrderByTriggeredAtDesc(Long userId, Pageable pageable);
 }

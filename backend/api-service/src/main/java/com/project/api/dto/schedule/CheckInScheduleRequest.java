@@ -11,6 +11,10 @@ public record CheckInScheduleRequest(
         @JsonFormat(pattern = "HH:mm")
         LocalTime preferredTime,
         List<String> activeDays,
+        @JsonFormat(pattern = "HH:mm")
+        LocalTime quietStartTime,
+        @JsonFormat(pattern = "HH:mm")
+        LocalTime quietEndTime,
         @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDate pauseUntil
 ) {
